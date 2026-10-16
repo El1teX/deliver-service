@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "node --watch src/index.js",
+    "dev": "node --watch src/index.js --port 3001",
     "start": "node src/index.js"
   },
   "dependencies": {

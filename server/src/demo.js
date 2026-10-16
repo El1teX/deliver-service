@@ -41,7 +41,14 @@ function seedRatings(user, stars) {
   user.ratings = stars.map((s, i) => ({ from: 'demo', fromName: 'Демо-пользователь', orderId: null, stars: s, comment: s === 5 ? 'Всё отлично!' : '', at: Date.now() - (i + 1) * 86400000 }));
 }
 
-export async function resetDemo({ placeOrder }) {
+let resetting = null;
+// Сброс сериализуется: параллельные вызовы ждут один и тот же результат.
+export function resetDemo(deps) {
+  resetting ??= doReset(deps).finally(() => (resetting = null));
+  return resetting;
+}
+
+async function doReset({ placeOrder }) {
   const demoIds = new Set([DEMO_CUSTOMER, DEMO_COURIER, ...NPC.map((n) => n.id)]);
   db.orders = db.orders.filter((o) => !demoIds.has(o.customerId) && !demoIds.has(o.courierId));
   db.users = db.users.filter((u) => !demoIds.has(u.id));

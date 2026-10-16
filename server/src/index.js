@@ -11,7 +11,9 @@ import { createUser, db, findOrder, findUser, newId, privateUser, publicUser, sa
 import { setupDemo } from './demo.js';
 import { startSimulation, stopSimulation } from './simulation.js';
 
-const PORT = Number(process.env.PORT ?? 3001);
+// --port из командной строки важнее переменной PORT (её могут выставить чужие dev-инструменты).
+const argPort = process.argv.indexOf('--port');
+const PORT = Number(argPort > 0 ? process.argv[argPort + 1] : (process.env.PORT ?? 3001));
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
