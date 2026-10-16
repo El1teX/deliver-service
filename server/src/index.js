@@ -345,7 +345,7 @@ app.use((err, req, res, next) => {
   fail(res, err.status ?? 500, err.status ? err.message : 'Внутренняя ошибка сервера');
 });
 
-const dist = path.resolve(import.meta.dirname, '../../client/dist');
+const dist = path.resolve(import.meta.dirname, '../../dist');
 if (fs.existsSync(dist)) {
   app.use(express.static(dist));
   app.get('*', (req, res) => res.sendFile(path.join(dist, 'index.html')));
