@@ -54,17 +54,22 @@ export default function Landing() {
         <div className="demo-card card">
           <div>
             <h3>Демонстрационный режим</h3>
-            <p className="muted">Клиент и курьер на одном экране: оформите заказ слева и примите его справа — или запустите автосценарий.</p>
+            <p className="muted">
+              Клиент Анна и курьер Дмитрий на одном экране — выбирать роль не нужно, вы управляете обоими: оформите заказ слева и возьмите его
+              справа или запустите автосценарий.
+            </p>
           </div>
-          <div className="demo-actions">
-            <Link to="/demo" className="btn btn-primary btn-lg">
-              ▶ Открыть демо
-            </Link>
-            <button className="btn btn-ghost" onClick={() => enterAs('demo_customer')}>
-              Войти как демо-клиент
-            </button>
-            <button className="btn btn-ghost" onClick={() => enterAs('demo_courier')}>
-              Войти как демо-курьер
+          <Link to="/demo" className="btn btn-primary btn-lg">
+            ▶ Открыть демо: клиент + курьер
+          </Link>
+          <div className="muted small">
+            Или зайти в демо-аккаунт на весь экран:{' '}
+            <button className="link-btn link-accent" onClick={() => enterAs('demo_customer')}>
+              клиентом
+            </button>{' '}
+            ·{' '}
+            <button className="link-btn link-accent" onClick={() => enterAs('demo_courier')}>
+              курьером
             </button>
           </div>
         </div>

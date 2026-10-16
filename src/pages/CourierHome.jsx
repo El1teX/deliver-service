@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { api, fetchRoute, km, rub, STATUS } from '../api.js';
+import { Popup } from 'react-leaflet';
 import { BaseMap, FitBounds, PinMarker, RouteLine } from '../components/MapKit.jsx';
 import { ItemsList, Modal, RateForm, Steps, UserLine } from '../components/ui.jsx';
 import { useToast, useUser } from '../UserContext.jsx';
@@ -122,7 +123,11 @@ export default function CourierHome() {
                 badge={`+${o.reward}`}
                 title={`${o.store.name} — ${rub(o.itemsTotal)}`}
                 onClick={() => setSelectedId(o.id)}
-              />
+              >
+                <Popup>
+                  <OrderPopup order={o} route={o.id === selectedId ? preview : null} onAccept={() => { setSelectedId(o.id); setConfirming(true); }} />
+                </Popup>
+              </PinMarker>
             ))
           )}
           {selected && !active && <PinMarker position={selected.dropoff} emoji="🏠" kind="home" title={selected.dropoff.address} />}
@@ -268,7 +273,54 @@ function OrderDetails({ order, loc, route, onBack, onAccept }) {
         <span className="lg lg-blue" /> к магазину <span className="lg lg-orange" /> к клиенту
       </div>
 
-      <button className="btn btn-primary btn-lg" onClick={onAccept}>
+      <div className="sticky-actions">
+        <button className="btn btn-primary btn-lg" onClick={onAccept}>
+          Взять заказ · +{order.reward} 🪙
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function OrderPopup({ order, route, onAccept }) {
+  const rest = order.items.length - 3;
+  return (
+    <div className="popup">
+      <div className="popup-head">
+        <b>
+          {order.store.icon} {order.store.name}
+        </b>
+        <span className="reward">+{order.reward} 🪙</span>
+      </div>
+      <div className="popup-row">
+        <span>
+          👤 {order.customer.name}
+        </span>
+        <span className="rating">{order.customer.rating.count ? `★ ${order.customer.rating.avg.toFixed(2)}` : 'новичок'}</span>
+      </div>
+      <div>
+        <span className="muted">Купить:</span>
+        <ul className="popup-items">
+          {order.items.slice(0, 3).map((it, i) => (
+            <li key={i}>
+              {it.name} × {it.qty}
+            </li>
+          ))}
+          {rest > 0 && <li className="muted">и ещё {rest}</li>}
+        </ul>
+      </div>
+      <div className="popup-row">
+        <span className="muted">Сумма покупки</span>
+        <b>{rub(order.itemsTotal - order.discount)}</b>
+      </div>
+      <div className="popup-row">
+        <span className="muted">🏠 {order.dropoff.address}</span>
+      </div>
+      <div className="popup-row">
+        <span className="muted">Маршрут</span>
+        <b>{route ? `${route.distanceKm.toFixed(1)} км · ~${route.durationMin} мин` : 'строится…'}</b>
+      </div>
+      <button className="btn btn-primary" onClick={onAccept}>
         Взять заказ
       </button>
     </div>
@@ -296,21 +348,6 @@ function ActiveDelivery({ order, loc, onPicked, onDelivered, onSimulate, onRate,
         </div>
       )}
 
-      {order.status === 'accepted' && (
-        <button className="btn btn-primary btn-lg" onClick={onPicked}>
-          ✅ Товары куплены, еду к клиенту
-        </button>
-      )}
-      {order.status === 'picked' && (
-        <button className="btn btn-primary btn-lg" onClick={onDelivered}>
-          📦 Заказ доставлен
-        </button>
-      )}
-      {order.status !== 'delivered' && (
-        <button className="btn btn-ghost" onClick={onSimulate}>
-          ▶ Демо: проехать маршрут автоматически
-        </button>
-      )}
 
       {order.status === 'delivered' && (
         <>
@@ -340,6 +377,23 @@ function ActiveDelivery({ order, loc, onPicked, onDelivered, onSimulate, onRate,
           </div>
         </div>
       </div>
+
+      {order.status !== 'delivered' && (
+        <div className="sticky-actions">
+          {order.status === 'accepted' ? (
+            <button className="btn btn-primary btn-lg" onClick={onPicked}>
+              ✅ Товары куплены, еду к клиенту
+            </button>
+          ) : (
+            <button className="btn btn-primary btn-lg" onClick={onDelivered}>
+              📦 Заказ доставлен
+            </button>
+          )}
+          <button className="btn btn-ghost" onClick={onSimulate}>
+            ▶ Демо: проехать маршрут автоматически
+          </button>
+        </div>
+      )}
     </div>
   );
 }

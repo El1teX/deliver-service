@@ -215,9 +215,11 @@ export default function CustomerHome() {
               <div className="muted small">🪙 После доставки начислим +{Math.round(itemsTotal * 0.05) + 10} баллов</div>
             </div>
 
-            <button className="btn btn-primary btn-lg" disabled={busy || !storeId}>
-              {storeId ? 'Оформить заказ' : 'Выберите магазин'}
-            </button>
+            <div className="sticky-actions">
+              <button className="btn btn-primary btn-lg" disabled={busy || !storeId}>
+                {storeId ? `Оформить заказ · ${rub(itemsTotal - discount + (fee ?? 0))}` : 'Выберите магазин на карте или в списке'}
+              </button>
+            </div>
           </form>
         )}
       </aside>

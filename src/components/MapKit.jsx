@@ -44,7 +44,7 @@ export function courierIcon() {
   return pin('🛵', 'courier');
 }
 
-export function PinMarker({ position, emoji, kind, badge, onClick, title }) {
+export function PinMarker({ position, emoji, kind, badge, onClick, title, children }) {
   if (!position) return null;
   return (
     <Marker
@@ -52,7 +52,9 @@ export function PinMarker({ position, emoji, kind, badge, onClick, title }) {
       icon={pin(emoji, kind, badge)}
       title={title}
       eventHandlers={onClick ? { click: (e) => { L.DomEvent.stopPropagation(e); onClick(); } } : undefined}
-    />
+    >
+      {children}
+    </Marker>
   );
 }
 

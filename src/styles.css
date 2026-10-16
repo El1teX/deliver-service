@@ -91,8 +91,7 @@ label { display: grid; gap: 6px; font-weight: 600; font-size: 14px; }
 .hero-features { display: flex; flex-wrap: wrap; gap: 8px; margin: 20px 0 28px; }
 .hero-features span { background: var(--surface); padding: 8px 12px; border-radius: 99px; font-weight: 600; font-size: 14px; box-shadow: var(--shadow); }
 .demo-card { display: grid; gap: 12px; border: 2px solid var(--accent); }
-.demo-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.demo-actions .btn-lg { grid-column: 1 / -1; }
+.link-accent { color: var(--accent-ink); text-decoration: underline; font-size: inherit; }
 .login { display: grid; gap: 16px; padding: 28px; }
 .role-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .role-switch button {
@@ -279,16 +278,40 @@ label { display: grid; gap: 6px; font-weight: 600; font-size: 14px; }
 
 /* Демо */
 .demo { height: 100vh; display: flex; flex-direction: column; background: var(--ink); }
-.demo-bar { display: flex; align-items: center; gap: 16px; padding: 10px 16px; color: #fff; flex-wrap: wrap; }
+.demo-bar { display: flex; align-items: center; gap: 12px 16px; padding: 10px 16px 6px; color: #fff; flex-wrap: wrap; }
 .demo-bar .role-tag { background: var(--accent); color: #fff; }
-.demo-msg { flex: 1; color: #d6cfc4; font-size: 14px; min-width: 200px; }
+.demo-bar .seg { margin-left: auto; }
+.seg-dark { background: #2d2924; box-shadow: none; }
+.seg-dark button { color: #d6cfc4; }
+.seg-dark button.active { background: #fff; color: var(--ink); }
+.seg-dark button:disabled { opacity: 0.35; cursor: not-allowed; }
+.demo-msg { color: #d6cfc4; font-size: 13px; line-height: 1.5; padding: 0 16px 10px; }
+.demo-msg b { color: var(--accent); }
 .demo-buttons { display: flex; gap: 8px; }
 .demo-buttons .btn-ghost { color: #fff; border-color: #4a443c; }
 .demo-buttons .btn-ghost:hover { background: #2d2924; }
 .demo-split { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 10px 10px; min-height: 0; }
-.demo-split section { display: flex; flex-direction: column; min-height: 0; }
+.demo-split section { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+.demo-view-customer, .demo-view-courier { grid-template-columns: 1fr; }
+.demo-view-customer .demo-pane-courier, .demo-view-courier .demo-pane-customer { display: none; }
 .demo-label { color: #fff; font-weight: 700; padding: 4px 6px 8px; }
 .demo-split iframe { flex: 1; width: 100%; border: 0; border-radius: 14px; background: var(--bg); min-height: 0; }
+
+/* Кнопка действия всегда видна внизу панели */
+.sticky-actions {
+  position: sticky; bottom: 0; margin: 0 -20px -20px; padding: 12px 20px 16px; background: var(--surface);
+  border-top: 1px solid var(--line); box-shadow: 0 -8px 20px rgba(40, 30, 20, 0.06); display: grid; gap: 8px; z-index: 5;
+}
+.shell-embedded .sticky-actions { margin: 0 -14px -14px; padding: 10px 14px 14px; }
+
+/* Карточка заказа во всплывающем окне карты */
+.leaflet-popup-content-wrapper { border-radius: 16px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18); }
+.leaflet-popup-content { margin: 14px 16px; font-family: 'Manrope', sans-serif; font-size: 13px; line-height: 1.4; min-width: 230px; }
+.popup { display: grid; gap: 8px; }
+.popup-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 15px; }
+.popup-items { margin: 0; padding-left: 16px; }
+.popup-row { display: flex; justify-content: space-between; gap: 8px; }
+.popup .btn { width: 100%; }
 
 /* В демо-iframe панель уже */
 .shell-embedded .split { grid-template-columns: 1fr 340px; }
@@ -301,11 +324,10 @@ label { display: grid; gap: 6px; font-weight: 600; font-size: 14px; }
 
 @media (max-width: 860px) {
   .landing { grid-template-columns: 1fr; padding-top: 28px; }
-  .split { grid-template-columns: 1fr; grid-template-rows: minmax(320px, 45vh) auto; height: auto; }
+  .shell:not(.shell-embedded) .split { grid-template-columns: 1fr; grid-template-rows: minmax(320px, 45vh) auto; height: auto; }
+  .shell:not(.shell-embedded) .panel { overflow: visible; }
   .panel { border-left: 0; border-top: 1px solid var(--line); }
   .topbar { flex-wrap: wrap; }
   .tabs { order: 3; flex-basis: 100%; }
   .me-name { display: none; }
-  .demo-split { grid-template-columns: 1fr; grid-auto-rows: 85vh; overflow-y: auto; }
-  .demo-actions { grid-template-columns: 1fr; }
 }

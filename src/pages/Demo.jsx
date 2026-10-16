@@ -1,11 +1,22 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api.js';
+
+const VIEWS = [
+  ['both', '🖥️ Оба экрана'],
+  ['customer', '🛍️ Клиент'],
+  ['courier', '🛵 Курьер'],
+];
+
+const narrow = () => window.innerWidth < 900;
 
 export default function Demo() {
   const [version, setVersion] = useState(0);
   const [ready, setReady] = useState(false);
   const [message, setMessage] = useState('');
+  // На узком экране два окна не помещаются — показываем по одному с переключателем.
+  const [view, setView] = useState(() => (narrow() ? 'customer' : 'both'));
+  const started = useRef(false);
 
   async function reset() {
     setReady(false);
@@ -13,17 +24,25 @@ export default function Demo() {
     await api('/demo/reset', { method: 'POST' });
     setVersion((v) => v + 1);
     setReady(true);
-    setMessage('Демо готово: оформите заказ за Анну или примите заказ за Дмитрия.');
+    setMessage('');
   }
 
   useEffect(() => {
+    if (started.current) return;
+    started.current = true;
     reset().catch((e) => setMessage(e.message));
+  }, []);
+
+  useEffect(() => {
+    const onResize = () => setView((v) => (v === 'both' && narrow() ? 'customer' : v));
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
   }, []);
 
   async function autoplay() {
     try {
       await api('/demo/autoplay', { method: 'POST' });
-      setMessage('Автосценарий: Анна оформила заказ, Дмитрий примет его через 3 секунды и поедет по маршруту.');
+      setMessage('Автосценарий: Анна оформила заказ — через 3 секунды Дмитрий примет его и поедет по маршруту.');
     } catch (e) {
       setMessage(e.message);
     }
@@ -35,23 +54,40 @@ export default function Demo() {
         <Link to="/" className="logo">
           <span>🛵</span> Мигом <span className="role-tag">демо</span>
         </Link>
-        <div className="demo-msg">{message}</div>
+        <div className="seg seg-dark">
+          {VIEWS.map(([id, label]) => (
+            <button key={id} className={view === id ? 'active' : ''} onClick={() => setView(id)} disabled={id === 'both' && narrow()}>
+              {label}
+            </button>
+          ))}
+        </div>
         <div className="demo-buttons">
           <button className="btn btn-primary" onClick={autoplay} disabled={!ready}>
             ▶ Автосценарий
           </button>
           <button className="btn btn-ghost" onClick={() => reset()}>
-            ↺ Сбросить демо
+            ↺ Сбросить
           </button>
         </div>
       </header>
+
+      <div className="demo-msg">
+        {message || (
+          <>
+            Выбирать никого не нужно — вы управляете обоими. <b>1.</b> Анна (клиент) выбирает магазин, товары и жмёт «Оформить заказ».{' '}
+            <b>2.</b> Дмитрий (курьер) нажимает на метку заказа на своей карте и жмёт «Взять заказ». <b>3.</b> «Проехать маршрут автоматически» — и
+            Анна видит курьера на карте. Или нажмите «Автосценарий».
+          </>
+        )}
+      </div>
+
       {ready && (
-        <div className="demo-split">
-          <section>
+        <div className={`demo-split demo-view-${view}`}>
+          <section className="demo-pane-customer">
             <div className="demo-label">🛍️ Клиент — Анна</div>
             <iframe key={`c${version}`} title="Клиент" src="/app?as=demo_customer&embed=1" />
           </section>
-          <section>
+          <section className="demo-pane-courier">
             <div className="demo-label">🛵 Курьер — Дмитрий</div>
             <iframe key={`k${version}`} title="Курьер" src="/app?as=demo_courier&embed=1" />
           </section>
