@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { api, fetchRoute, km, rub, STATUS } from '../api.js';
 import { Popup } from 'react-leaflet';
 import { BaseMap, FitBounds, PinMarker, RouteLine } from '../components/MapKit.jsx';
-import { ItemsList, Modal, RateForm, Steps, UserLine } from '../components/ui.jsx';
+import { ItemsList, Sheet, Modal, RateForm, Steps, UserLine } from '../components/ui.jsx';
 import { useToast, useUser } from '../UserContext.jsx';
 
 const DEFAULT_LOC = { lat: 55.7558, lng: 37.6173 };
@@ -137,15 +137,15 @@ export default function CourierHome() {
         </BaseMap>
         <div className="map-tools">
           <button className={`btn btn-sm ${placing ? 'btn-primary' : 'btn-white'}`} onClick={() => setPlacing((p) => !p)}>
-            {placing ? 'Кликните на карту…' : '📍 Указать моё место'}
+            {placing ? 'Коснитесь карты…' : <>📍<span className="hide-sm"> Моё место</span></>}
           </button>
           <button className="btn btn-sm btn-white" onClick={useGeolocation}>
-            🎯 Геолокация
+            🎯<span className="hide-sm"> Геолокация</span>
           </button>
         </div>
       </div>
 
-      <aside className="panel">
+      <Sheet expandKey={active?.status === 'delivered' ? active.id : null}>
         {mine === null ? (
           <div className="muted">Загрузка…</div>
         ) : active ? (
@@ -169,7 +169,7 @@ export default function CourierHome() {
               <h2>Заказы рядом</h2>
               <span className="pill">{open.length}</span>
             </div>
-            <p className="muted small">Нажмите на метку на карте или на заказ в списке, чтобы увидеть детали и маршрут.</p>
+            <p className="muted small">Нажмите на метку или заказ, чтобы увидеть маршрут.</p>
             {!open.length && <div className="empty">Пока нет свободных заказов. Новые появятся автоматически.</div>}
             <div className="order-list">
               {sortedOpen.map((o) => (
@@ -190,7 +190,7 @@ export default function CourierHome() {
             </div>
           </>
         )}
-      </aside>
+      </Sheet>
 
       {confirming && selected && (
         <Modal onClose={() => setConfirming(false)}>

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { api, fetchRoute, km, rub, STATUS } from '../api.js';
 import { BaseMap, FitBounds, PinMarker, RouteLine } from '../components/MapKit.jsx';
-import { ItemsList, RateForm, Steps, UserLine } from '../components/ui.jsx';
+import { ItemsList, Sheet, Step, RateForm, Steps, UserLine } from '../components/ui.jsx';
 import { useToast, useUser } from '../UserContext.jsx';
 
 const ACTIVE = ['new', 'accepted', 'picked'];
@@ -22,6 +22,7 @@ export default function CustomerHome() {
   const [dropoff, setDropoff] = useState(() => me.location ?? { lat: 55.7536, lng: 37.6398 });
   const [address, setAddress] = useState(me.location?.address ?? '');
   const [comment, setComment] = useState('');
+  const [showComment, setShowComment] = useState(false);
   const [preview, setPreview] = useState(null);
   const [busy, setBusy] = useState(false);
 
@@ -137,92 +138,82 @@ export default function CustomerHome() {
           {current && courierLoc && ACTIVE.includes(current.status) && <PinMarker position={courierLoc} emoji="🛵" kind="courier" title={current.courier?.name} />}
           <FitBounds points={current ? [current.store, current.dropoff, current.status !== 'new' ? courierLoc : null] : [store, dropoff]} deps={[current?.id, current?.status, storeId]} />
         </BaseMap>
-        {!current && <div className="map-hint">Нажмите на карту, чтобы указать адрес доставки, и на магазин, чтобы выбрать его</div>}
+        {!current && <div className="map-hint">Коснитесь карты, чтобы указать адрес</div>}
       </div>
 
-      <aside className="panel">
+      <Sheet expandKey={current?.status === 'delivered' ? current.id : null}>
         {orders === null ? (
           <div className="muted">Загрузка…</div>
         ) : current ? (
           <Tracking order={current} courierLoc={courierLoc} onCancel={cancel} onRate={rate} onClose={() => setDismissed((d) => [...d, current.id])} />
         ) : (
           <form onSubmit={submit} className="order-form">
-            <h2>Новый заказ</h2>
+            <h2>Что привезти?</h2>
 
-            <div className="field-label">1. Где купить</div>
-            <div className="store-chips">
-              {stores.map((s) => (
-                <button type="button" key={s.id} className={`chip ${s.id === storeId ? 'active' : ''}`} onClick={() => setStoreId(s.id)}>
-                  {s.icon} {s.name}
-                </button>
-              ))}
-            </div>
-            {store && <div className="muted small">{store.type} · {store.address}</div>}
-
-            <div className="field-label">2. Что купить</div>
-            {items.map((it, i) => (
-              <div className="item-row" key={i}>
-                <input placeholder="Товар" value={it.name} onChange={(e) => setItem(i, { name: e.target.value })} />
-                <input type="number" min="1" className="qty" value={it.qty} onChange={(e) => setItem(i, { qty: e.target.value })} title="Количество" />
-                <input type="number" min="0" className="price" placeholder="₽ / шт" value={it.price} onChange={(e) => setItem(i, { price: e.target.value })} title="Примерная цена" />
-                <button type="button" className="icon-btn" onClick={() => setItems((l) => (l.length > 1 ? l.filter((_, j) => j !== i) : [emptyItem()]))} aria-label="Удалить">
-                  ✕
-                </button>
+            <Step n={1} title="Магазин" done={Boolean(store)}>
+              <div className="chips-scroll">
+                {stores.map((s) => (
+                  <button type="button" key={s.id} className={`chip ${s.id === storeId ? 'active' : ''}`} onClick={() => setStoreId(s.id)}>
+                    {s.icon} {s.name}
+                  </button>
+                ))}
               </div>
-            ))}
-            <div className="suggestions">
-              <button type="button" className="chip chip-add" onClick={() => setItems((l) => [...l, emptyItem()])}>
-                + Товар
-              </button>
-              {SUGGESTIONS.map((s) => (
-                <button
-                  type="button"
-                  key={s}
-                  className="chip chip-light"
-                  onClick={() => setItems((l) => (l.at(-1)?.name ? [...l, { ...emptyItem(), name: s }] : [...l.slice(0, -1), { ...emptyItem(), name: s }]))}
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
+              {store && <div className="muted small">{store.address}</div>}
+            </Step>
 
-            <div className="field-label">3. Куда доставить</div>
-            <input placeholder="Улица, дом, квартира" value={address} onChange={(e) => setAddress(e.target.value)} />
-            <div className="muted small">
-              📍 {dropoff.lat.toFixed(4)}, {dropoff.lng.toFixed(4)} — точку можно сдвинуть кликом по карте
-            </div>
-            <textarea placeholder="Комментарий курьеру" rows={2} value={comment} onChange={(e) => setComment(e.target.value)} />
-
-            <div className="summary card-soft">
-              <div>
-                <span>Товары</span>
-                <b>{rub(itemsTotal)}</b>
-              </div>
-              {discount > 0 && (
-                <div className="perk">
-                  <span>🏷️ Скидка 10%</span>
-                  <b>−{rub(discount)}</b>
+            <Step n={2} title="Список покупок" done={items.some((i) => i.name.trim())}>
+              {items.map((it, i) => (
+                <div className="item-row" key={i}>
+                  <input placeholder="Например, молоко" value={it.name} onChange={(e) => setItem(i, { name: e.target.value })} />
+                  <input type="number" min="1" inputMode="numeric" className="qty" value={it.qty} onChange={(e) => setItem(i, { qty: e.target.value })} aria-label="Количество" />
+                  <input type="number" min="0" inputMode="numeric" className="price" placeholder="≈ ₽" value={it.price} onChange={(e) => setItem(i, { price: e.target.value })} aria-label="Примерная цена за штуку" />
+                  <button type="button" className="icon-btn" onClick={() => setItems((l) => (l.length > 1 ? l.filter((_, j) => j !== i) : [emptyItem()]))} aria-label="Удалить">
+                    ✕
+                  </button>
                 </div>
+              ))}
+              <div className="chips-scroll">
+                <button type="button" className="chip chip-add" onClick={() => setItems((l) => [...l, emptyItem()])}>
+                  + Ещё
+                </button>
+                {SUGGESTIONS.map((s) => (
+                  <button
+                    type="button"
+                    key={s}
+                    className="chip chip-light"
+                    onClick={() => setItems((l) => (l.at(-1)?.name ? [...l, { ...emptyItem(), name: s }] : [...l.slice(0, -1), { ...emptyItem(), name: s }]))}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </Step>
+
+            <Step n={3} title="Адрес" done={Boolean(address.trim())}>
+              <input placeholder="Улица, дом, квартира" value={address} onChange={(e) => setAddress(e.target.value)} />
+              <div className="muted small">📍 Точку на карте можно поменять касанием</div>
+              {showComment || comment ? (
+                <textarea placeholder="Комментарий курьеру" rows={2} value={comment} onChange={(e) => setComment(e.target.value)} autoFocus={showComment} />
+              ) : (
+                <button type="button" className="link-btn link-accent" onClick={() => setShowComment(true)}>
+                  + Комментарий курьеру
+                </button>
               )}
-              <div>
-                <span>Доставка {preview && <span className="muted">· {preview.distanceKm.toFixed(1)} км</span>}</span>
-                <b>{fee === null ? '—' : fee === 0 ? <span className="perk">🚚 0 ₽</span> : rub(fee)}</b>
-              </div>
-              <div className="total">
-                <span>Итого</span>
-                <b>{rub(itemsTotal - discount + (fee ?? 0))}</b>
-              </div>
-              <div className="muted small">🪙 После доставки начислим +{Math.round(itemsTotal * 0.05) + 10} баллов</div>
-            </div>
+            </Step>
 
             <div className="sticky-actions">
+              <div className="mini-summary">
+                <span>Товары {rub(itemsTotal - discount)}</span>
+                <span>Доставка {fee === null ? '—' : fee === 0 ? '0 ₽ 🎁' : rub(fee)}</span>
+                <span className="mini-points">🪙 +{Math.round(itemsTotal * 0.05) + 10}</span>
+              </div>
               <button className="btn btn-primary btn-lg" disabled={busy || !storeId}>
-                {storeId ? `Оформить заказ · ${rub(itemsTotal - discount + (fee ?? 0))}` : 'Выберите магазин на карте или в списке'}
+                {storeId ? `Заказать за ${rub(itemsTotal - discount + (fee ?? 0))}` : 'Выберите магазин'}
               </button>
             </div>
           </form>
         )}
-      </aside>
+      </Sheet>
     </div>
   );
 }
@@ -266,10 +257,14 @@ function Tracking({ order, courierLoc, onCancel, onRate, onClose }) {
         </button>
       )}
 
-      <div className="card-soft">
-        <div className="muted small">
-          {order.store.icon} {order.store.name} → 🏠 {order.dropoff.address}
-        </div>
+      <details className="card-soft order-details">
+        <summary>
+          <span>
+            {order.store.icon} {order.store.name} · {order.items.length} поз.
+          </span>
+          <b>{rub(order.total)}</b>
+        </summary>
+        <div className="muted small">🏠 {order.dropoff.address}</div>
         <ItemsList items={order.items} />
         <div className="summary">
           {order.discount > 0 && (
@@ -282,12 +277,8 @@ function Tracking({ order, courierLoc, onCancel, onRate, onClose }) {
             <span>Доставка</span>
             <b>{rub(order.deliveryFee)}</b>
           </div>
-          <div className="total">
-            <span>Итого</span>
-            <b>{rub(order.total)}</b>
-          </div>
         </div>
-      </div>
+      </details>
 
       {order.status === 'new' && (
         <button className="btn btn-danger-ghost" onClick={onCancel}>

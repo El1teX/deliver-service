@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { api } from '../api.js';
+import { Link } from 'react-router-dom';
+import { api, embedded } from '../api.js';
 import { Avatar, Rating } from '../components/ui.jsx';
 import { useUser } from '../UserContext.jsx';
 
 export default function Profile() {
-  const { me } = useUser();
+  const { me, logout } = useUser();
   const [profile, setProfile] = useState(null);
   useEffect(() => {
     api(`/users/${me.id}`).then(setProfile);
@@ -53,6 +54,19 @@ export default function Profile() {
         ))}
       </div>
 
+      <div className="link-cards">
+        <Link to="/app/leaders" className="card link-card">
+          <span>📊</span>
+          <b>Рейтинг пользователей</b>
+          <span className="muted">→</span>
+        </Link>
+        <Link to="/app/achievements" className="card link-card">
+          <span>🏅</span>
+          <b>Мои достижения</b>
+          <span className="muted">→</span>
+        </Link>
+      </div>
+
       {profile?.achievements.length > 0 && (
         <>
           <h2>Полученные достижения</h2>
@@ -80,6 +94,12 @@ export default function Profile() {
           </div>
         ))}
       </div>
+
+      {!embedded && (
+        <button className="btn btn-danger-ghost" onClick={logout}>
+          Выйти из аккаунта
+        </button>
+      )}
     </div>
   );
 }

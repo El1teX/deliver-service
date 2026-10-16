@@ -24,46 +24,41 @@ export default function App() {
 }
 
 function Shell() {
-  const { me, loading, logout } = useUser();
+  const { me, loading } = useUser();
   if (loading) return <div className="center-screen">Загрузка…</div>;
   if (!me) return <Navigate to="/" replace />;
   const isCourier = me.role === 'courier';
 
   const tabs = [
-    ['', isCourier ? '🗺️ Заказы рядом' : '🗺️ Заказать'],
-    ['orders', isCourier ? '📦 Мои доставки' : '📦 Мои заказы'],
-    ['achievements', '🏅 Достижения'],
-    ['shop', '🎁 Призы'],
-    ['leaders', '📊 Рейтинг'],
+    ['', '🗺️', isCourier ? 'Карта' : 'Заказать'],
+    ['orders', '📦', isCourier ? 'Доставки' : 'Заказы'],
+    ['achievements', '🏅', 'Награды'],
+    ['shop', '🎁', 'Призы'],
+    ['profile', '👤', 'Профиль'],
   ];
+  const links = (className) =>
+    tabs.map(([path, icon, label]) => (
+      <NavLink key={path} to={`/app/${path}`} end={path === ''} className={className}>
+        <span className="tab-icon">{icon}</span>
+        <span className="tab-label">{label}</span>
+      </NavLink>
+    ));
 
   return (
     <div className={`shell ${embedded ? 'shell-embedded' : ''}`}>
       <header className="topbar">
-        <NavLink to={embedded ? '/app' : '/'} className="logo">
+        <NavLink to="/app" className="logo">
           <span>🛵</span> Мигом
           <span className={`role-tag role-${me.role}`}>{isCourier ? 'курьер' : 'клиент'}</span>
         </NavLink>
-        <nav className="tabs">
-          {tabs.map(([path, label]) => (
-            <NavLink key={path} to={`/app/${path}`} end={path === ''} className="tab">
-              {label}
-            </NavLink>
-          ))}
-        </nav>
+        <nav className="tabs">{links('tab')}</nav>
         <div className="topbar-right">
           <NavLink to="/app/shop" className="points-badge" title="Ваши баллы">
             🪙 {me.points}
           </NavLink>
           <NavLink to="/app/profile" className="me-chip" title="Профиль">
             <Avatar user={me} size={32} />
-            <span className="me-name">{me.name}</span>
           </NavLink>
-          {!embedded && (
-            <button className="btn btn-ghost btn-sm" onClick={logout}>
-              Выйти
-            </button>
-          )}
         </div>
       </header>
       <main className="shell-main">
@@ -76,6 +71,7 @@ function Shell() {
           <Route path="profile" element={<Profile />} />
         </Routes>
       </main>
+      <nav className="bottom-nav">{links('bottom-tab')}</nav>
     </div>
   );
 }

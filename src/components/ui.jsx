@@ -123,3 +123,34 @@ export function ItemsList({ items, checkable }) {
     </ul>
   );
 }
+
+// На компьютере — боковая панель, на телефоне — выдвижная шторка поверх карты.
+export function Sheet({ children, expandKey }) {
+  const [open, setOpen] = useState(false);
+  const [lastKey, setLastKey] = useState(expandKey);
+  // Новый контекст (выбран заказ, сменился статус) — раскрываем шторку.
+  if (expandKey !== lastKey) {
+    setLastKey(expandKey);
+    if (expandKey) setOpen(true);
+  }
+  return (
+    <aside className={`panel ${open ? 'sheet-open' : ''}`}>
+      <button type="button" className="sheet-handle" onClick={() => setOpen((o) => !o)} aria-label={open ? 'Свернуть панель' : 'Развернуть панель'}>
+        <span />
+      </button>
+      {children}
+    </aside>
+  );
+}
+
+export function Step({ n, title, done, children }) {
+  return (
+    <section className="form-step">
+      <div className="field-label">
+        <span className={`step-num ${done ? 'done' : ''}`}>{done ? '✓' : n}</span>
+        {title}
+      </div>
+      {children}
+    </section>
+  );
+}
