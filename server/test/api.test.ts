@@ -213,3 +213,41 @@ describe('призы', () => {
     expect((await placeOrder(customer.token)).deliveryFee).toBeGreaterThan(0);
   });
 });
+
+describe('чат по заказу', () => {
+  it('участники переписываются, посторонний получает 404, после доставки писать нельзя', async () => {
+    const customer = await register('customer');
+    const courier = await register('courier');
+    const stranger = await register('courier');
+    const order = await placeOrder(customer.token);
+    const url = `/api/orders/${order.id}/messages`;
+
+    // Пока курьера нет — писать некому.
+    expect((await as(customer.token).post(url, { text: 'Привет' })).status).toBe(409);
+    await as(courier.token).post(`/api/orders/${order.id}/accept`);
+
+    const sent = await as(courier.token).post(url, { text: '  Подъезжаю  ' });
+    expect(sent.status).toBe(201);
+    expect(sent.body).toMatchObject({ fromId: courier.user.id, text: 'Подъезжаю', readAt: null });
+    expect((await as(customer.token).post(url, { text: 'Жду' })).status).toBe(201);
+
+    expect((await as(customer.token).post(url, { text: '   ' })).status).toBe(400);
+    expect((await as(customer.token).post(url, { text: 'а'.repeat(501) })).status).toBe(400);
+
+    expect((await as(stranger.token).get(url)).status).toBe(404);
+    expect((await as(stranger.token).post(url, { text: 'Я тут' })).status).toBe(404);
+
+    expect((await as(customer.token).post(`${url}/read`)).body.read).toBe(1);
+    const history = await as(customer.token).get(url);
+    expect(history.body.canWrite).toBe(true);
+    expect(history.body.messages.map((m: { text: string }) => m.text)).toEqual(['Подъезжаю', 'Жду']);
+    expect(history.body.messages[0].readAt).toBeTruthy();
+
+    await as(courier.token).post(`/api/orders/${order.id}/status`, { status: 'picked' });
+    await as(courier.token).post(`/api/orders/${order.id}/status`, { status: 'delivered' });
+    expect((await as(courier.token).post(url, { text: 'Спасибо!' })).status).toBe(409);
+    const after = await as(courier.token).get(url);
+    expect(after.body.canWrite).toBe(false);
+    expect(after.body.messages).toHaveLength(2);
+  });
+});

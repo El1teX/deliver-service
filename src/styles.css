@@ -317,6 +317,24 @@ label { display: grid; gap: 6px; font-weight: 600; font-size: 14px; }
 .shell-embedded .split { grid-template-columns: 1fr 340px; }
 .shell-embedded .panel { padding: 14px; }
 
+/* Чат по заказу */
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 30px; }
+.chat-button { position: relative; }
+.chat-badge { position: absolute; top: -7px; right: -7px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--red); color: #fff; font-size: 11px; font-weight: 700; display: grid; place-items: center; }
+.chat-sheet { max-width: 420px; height: min(560px, 80vh); grid-template-rows: auto 1fr auto auto; gap: 10px; }
+.chat-title { margin: 0; }
+.chat-list { overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding: 4px 2px; overscroll-behavior: contain; }
+.chat-empty { text-align: center; padding: 8px; }
+.chat-msg { max-width: 80%; align-self: flex-start; background: var(--soft); border: 1px solid var(--line); border-radius: 14px 14px 14px 4px; padding: 7px 10px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.chat-msg.mine { align-self: flex-end; background: var(--accent-soft); border-color: transparent; border-radius: 14px 14px 4px 14px; }
+.chat-time { display: block; text-align: right; font-size: 11px; color: var(--muted); margin-top: 2px; }
+.chat-quick { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+.chat-quick::-webkit-scrollbar { display: none; }
+.chat-quick .chip { white-space: nowrap; flex: none; }
+.chat-form { display: flex; gap: 8px; }
+.chat-form input { flex: 1; min-width: 0; }
+.chat-form .btn { padding: 0 16px; }
+
 @media (max-width: 1100px) {
   .shell-embedded .split { grid-template-columns: 1fr; grid-template-rows: 45% 55%; }
   .shell-embedded .panel { border-left: 0; border-top: 1px solid var(--line); }
@@ -404,6 +422,7 @@ label { display: grid; gap: 6px; font-weight: 600; font-size: 14px; }
   .toasts { top: 58px; left: 10px; right: 10px; max-width: none; }
   .modal-backdrop { align-items: end; padding: 0; }
   .modal { border-radius: 22px 22px 0 0; max-width: none; padding-bottom: calc(18px + env(safe-area-inset-bottom)); }
+  .chat-sheet { height: 75vh; }
 
   .landing { padding: 20px 16px 32px; gap: 20px; min-height: auto; }
   .hero h1 { font-size: 30px; }

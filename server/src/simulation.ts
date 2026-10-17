@@ -14,7 +14,8 @@ export function stopSimulation(orderId: string) {
 
 export const stopAllSimulations = () => [...running.keys()].forEach(stopSimulation);
 
-export async function startSimulation(orderId: string, { autoDeliver = false } = {}) {
+// onApproach вызывается один раз, когда курьер с товарами проехал ~85% пути к клиенту.
+export async function startSimulation(orderId: string, { autoDeliver = false, onApproach }: { autoDeliver?: boolean; onApproach?: () => unknown } = {}) {
   stopSimulation(orderId);
   const order = await prisma.order.findUnique({ where: { id: orderId } });
   const route = order?.route as Route | null;
@@ -37,6 +38,7 @@ export async function startSimulation(orderId: string, { autoDeliver = false } =
   let pause = 0;
   let segment = 0;
   let busy = false;
+  let approached = false;
 
   const timer = setInterval(async () => {
     if (busy) return;
@@ -61,6 +63,10 @@ export async function startSimulation(orderId: string, { autoDeliver = false } =
         await markPicked(courierId, orderId);
         status = 'picked';
         pause = 6; // «покупает товары» пару секунд
+      }
+      if (onApproach && !approached && status === 'picked' && s >= pickupDist + (total - pickupDist) * 0.85) {
+        approached = true;
+        await onApproach();
       }
       if (s >= total) {
         stopSimulation(orderId);

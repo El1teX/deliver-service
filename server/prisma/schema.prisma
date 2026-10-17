@@ -35,20 +35,20 @@ enum PointsKind {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  passwordHash String
-  name         String
-  role         Role
-  isDemo       Boolean  @default(false)
-  frame        String?
-  lat          Float?
-  lng          Float?
-  address      String? // сохранённый адрес доставки клиента
+  id                String   @id @default(cuid())
+  email             String   @unique
+  passwordHash      String
+  name              String
+  role              Role
+  isDemo            Boolean  @default(false)
+  frame             String?
+  lat               Float?
+  lng               Float?
+  address           String? // сохранённый адрес доставки клиента
   // Бонусы, купленные за баллы и ещё не использованные.
-  freeDeliveryPerks Int @default(0)
-  discount10Perks   Int @default(0)
-  createdAt    DateTime @default(now())
+  freeDeliveryPerks Int      @default(0)
+  discount10Perks   Int      @default(0)
+  createdAt         DateTime @default(now())
 
   ordersAsCustomer Order[]           @relation("CustomerOrders")
   ordersAsCourier  Order[]           @relation("CourierOrders")
@@ -58,6 +58,7 @@ model User {
   purchases        Purchase[]
   points           PointsEntry[]
   events           OrderEvent[]
+  messages         Message[]
 }
 
 model Store {
@@ -72,39 +73,40 @@ model Store {
 }
 
 model Order {
-  id             String      @id @default(cuid())
-  number         Int         @unique @default(autoincrement())
-  customerId     String
-  customer       User        @relation("CustomerOrders", fields: [customerId], references: [id], onDelete: Cascade)
-  courierId      String?
-  courier        User?       @relation("CourierOrders", fields: [courierId], references: [id], onDelete: SetNull)
-  storeId        String
-  store          Store       @relation(fields: [storeId], references: [id])
-  status         OrderStatus @default(new)
-  itemsTotal     Int
-  discount       Int         @default(0)
-  deliveryFee    Int
-  total          Int
-  perksUsed      String[]
-  dropoffLat     Float
-  dropoffLng     Float
-  dropoffAddress String
-  comment        String      @default("")
-  distanceKm     Float
-  reward         Int
-  isNight        Boolean     @default(false)
+  id                String      @id @default(cuid())
+  number            Int         @unique @default(autoincrement())
+  customerId        String
+  customer          User        @relation("CustomerOrders", fields: [customerId], references: [id], onDelete: Cascade)
+  courierId         String?
+  courier           User?       @relation("CourierOrders", fields: [courierId], references: [id], onDelete: SetNull)
+  storeId           String
+  store             Store       @relation(fields: [storeId], references: [id])
+  status            OrderStatus @default(new)
+  itemsTotal        Int
+  discount          Int         @default(0)
+  deliveryFee       Int
+  total             Int
+  perksUsed         String[]
+  dropoffLat        Float
+  dropoffLng        Float
+  dropoffAddress    String
+  comment           String      @default("")
+  distanceKm        Float
+  reward            Int
+  isNight           Boolean     @default(false)
   // Маршрут курьер → магазин → клиент: { coords, distanceKm, durationMin, pickupIndex }
-  route          Json?
+  route             Json?
   courierDistanceKm Float? // длина маршрута курьера, идёт в его статистику
-  createdAt      DateTime    @default(now())
-  acceptedAt     DateTime?
-  pickedAt       DateTime?
-  deliveredAt    DateTime?
+  createdAt         DateTime    @default(now())
+  acceptedAt        DateTime?
+  pickedAt          DateTime?
+  deliveredAt       DateTime?
 
-  items   OrderItem[]
-  events  OrderEvent[]
-  ratings Rating[]
-  points  PointsEntry[]
+  items    OrderItem[]
+  events   OrderEvent[]
+  ratings  Rating[]
+  points   PointsEntry[]
+  messages Message[]
 
   @@index([status])
   @@index([customerId])
@@ -186,4 +188,18 @@ model PointsEntry {
   createdAt DateTime   @default(now())
 
   @@index([userId])
+}
+
+// Чат клиента и курьера по заказу. readAt — когда сообщение прочитал получатель.
+model Message {
+  id        String    @id @default(cuid())
+  orderId   String
+  order     Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  fromId    String
+  from      User      @relation(fields: [fromId], references: [id], onDelete: Cascade)
+  text      String
+  createdAt DateTime  @default(now())
+  readAt    DateTime?
+
+  @@index([orderId, createdAt])
 }

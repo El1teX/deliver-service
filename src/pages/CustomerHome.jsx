@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { api, fetchRoute, km, rub, STATUS } from '../api.js';
+import { ChatButton } from '../components/Chat.jsx';
 import { BaseMap, FitBounds, PinMarker, RouteLine } from '../components/MapKit.jsx';
 import { ItemsList, Sheet, Step, RateForm, Steps, UserLine } from '../components/ui.jsx';
 import { useToast, useUser } from '../UserContext.jsx';
@@ -240,7 +241,10 @@ function Tracking({ order, courierLoc, onCancel, onRate, onClose }) {
 
       {order.courier && (
         <div className="card-soft">
-          <div className="muted small">Ваш курьер</div>
+          <div className="card-head">
+            <div className="muted small">Ваш курьер</div>
+            <ChatButton order={order} peer={order.courier} />
+          </div>
           <UserLine user={order.courier} subtitle={`${order.courier.delivered} доставок`} />
           {distLeft !== null && order.status !== 'delivered' && (
             <div className="eta">

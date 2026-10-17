@@ -5,6 +5,7 @@ import express from 'express';
 import { demoRouter } from './demo';
 import { errorHandler, httpError } from './lib/http';
 import { authRouter } from './modules/authRoutes';
+import { chatRouter } from './modules/chat';
 import { achievementsRouter } from './modules/gamification';
 import { ordersRouter } from './modules/orders';
 import { prizesRouter } from './modules/prizes';
@@ -16,7 +17,7 @@ export function createApp() {
   app.use(express.json({ limit: '100kb' }));
 
   app.get('/api/health', (_req, res) => res.json({ ok: true }));
-  app.use('/api', authRouter, usersRouter, ordersRouter, achievementsRouter, prizesRouter, demoRouter);
+  app.use('/api', authRouter, usersRouter, ordersRouter, chatRouter, achievementsRouter, prizesRouter, demoRouter);
   app.use('/api', (_req, _res, next) => next(httpError(404, 'Нет такого метода')));
   app.use(errorHandler);
 

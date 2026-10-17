@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { api, fetchRoute, km, rub, STATUS } from '../api.js';
 import { Popup } from 'react-leaflet';
+import { ChatButton } from '../components/Chat.jsx';
 import { BaseMap, FitBounds, PinMarker, RouteLine } from '../components/MapKit.jsx';
 import { ItemsList, Sheet, Modal, RateForm, Steps, UserLine } from '../components/ui.jsx';
 import { useToast, useUser } from '../UserContext.jsx';
@@ -362,7 +363,10 @@ function ActiveDelivery({ order, loc, onPicked, onDelivered, onSimulate, onRate,
       )}
 
       <div className="card-soft">
-        <div className="muted small">Клиент</div>
+        <div className="card-head">
+          <div className="muted small">Клиент</div>
+          <ChatButton order={order} peer={order.customer} />
+        </div>
         <UserLine user={order.customer} />
         {order.comment && <div className="comment">💬 {order.comment}</div>}
       </div>

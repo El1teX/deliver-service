@@ -6,6 +6,7 @@ import { hashPassword, signToken } from './auth';
 import { STORES } from './catalog';
 import { prisma } from './db';
 import { httpError, parse, wrap } from './lib/http';
+import { sendMessage } from './modules/chat';
 import { checkAchievements } from './modules/gamification';
 import { acceptOrder, placeOrder } from './modules/orders';
 import { grantPoints, pointsSummary } from './modules/points';
@@ -193,7 +194,9 @@ demoRouter.post('/demo/autoplay', wrap(async (_req, res) => {
     try {
       const courier = await prisma.user.findUniqueOrThrow({ where: { id: DEMO_COURIER } });
       await acceptOrder(courier, order.id);
-      setTimeout(() => startSimulation(order.id, { autoDeliver: true }), 1500);
+      // Перед доставкой курьер пишет клиенту в чат.
+      const onApproach = () => sendMessage(courier.id, order.id, { text: 'Подъезжаю' }).catch(() => {});
+      setTimeout(() => startSimulation(order.id, { autoDeliver: true, onApproach }), 1500);
     } catch (e) {
       console.warn('autoplay:', (e as Error).message);
     }
