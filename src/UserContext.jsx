@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { io } from 'socket.io-client';
-import { api, getUserId, setUserId } from './api.js';
+import { api, demoAs, getToken, setToken } from './api.js';
 
 const UserCtx = createContext(null);
 const ToastCtx = createContext(() => {});
@@ -35,21 +35,29 @@ export function ToastProvider({ children }) {
 
 export function UserProvider({ children }) {
   const [me, setMe] = useState(null);
-  const [loading, setLoading] = useState(Boolean(getUserId()));
+  const [loading, setLoading] = useState(Boolean(getToken() || demoAs()));
   const [socket, setSocket] = useState(null);
   const toast = useToast();
 
   useEffect(() => {
-    if (!getUserId()) return;
-    api('/me')
+    let session;
+    if (getToken()) session = api('/me');
+    // Демо-iframe входит в свой аккаунт сам.
+    else if (demoAs())
+      session = api('/demo/login', { method: 'POST', body: { userId: demoAs() } }).then(({ token, user }) => {
+        setToken(token);
+        return user;
+      });
+    else return;
+    session
       .then(setMe)
-      .catch(() => setUserId(null))
+      .catch(() => setToken(null))
       .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
     if (!me?.id) return;
-    const s = io({ auth: { userId: me.id } });
+    const s = io({ auth: { token: getToken() } });
     s.on('me:update', setMe);
     s.on('notify', (e) => {
       if (e.type === 'achievement') toast({ kind: 'achievement', icon: e.icon, title: `Достижение: ${e.title}`, text: `+${e.points} баллов` });
@@ -65,12 +73,13 @@ export function UserProvider({ children }) {
       setMe,
       loading,
       socket,
-      login(user) {
-        setUserId(user.id);
+      // Принимает ответ /auth/login, /auth/register или /demo/login.
+      login({ token, user }) {
+        setToken(token);
         setMe(user);
       },
       logout() {
-        setUserId(null);
+        setToken(null);
         setMe(null);
       },
     }),

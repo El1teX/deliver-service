@@ -1,29 +1,49 @@
-// Идентификатор пользователя: из ?as= (демо в iframe) — хранится в window.name, чтобы
-// у каждого iframe была своя сессия; иначе — из localStorage.
+// Сессия: JWT-токен. В демо (?as=demo_customer) у каждого iframe своя сессия в window.name,
+// иначе токен хранится в localStorage.
 const params = new URLSearchParams(window.location.search);
 const PREFIX = 'migom:';
-if (params.get('as')) window.name = PREFIX + params.get('as');
+const TOKEN_KEY = 'migom:token';
+
+function readFrameSession() {
+  try {
+    return window.name.startsWith(PREFIX) ? JSON.parse(window.name.slice(PREFIX.length)) : null;
+  } catch {
+    return null;
+  }
+}
+const writeFrameSession = (session) => (window.name = PREFIX + JSON.stringify(session));
+
+if (params.get('as')) writeFrameSession({ demoAs: params.get('as'), token: null });
 
 export const embedded = params.has('embed') || window.self !== window.top;
-const sessionUser = () => (window.name.startsWith(PREFIX) ? window.name.slice(PREFIX.length) : null);
+export const demoAs = () => readFrameSession()?.demoAs ?? null;
 
-export function getUserId() {
-  return sessionUser() ?? localStorage.getItem('migom:user');
+export function getToken() {
+  const frame = readFrameSession();
+  if (frame) return frame.token;
+  try {
+    return localStorage.getItem(TOKEN_KEY);
+  } catch {
+    return null;
+  }
 }
 
-export function setUserId(id) {
-  if (sessionUser()) {
-    window.name = id ? PREFIX + id : '';
-    return;
+export function setToken(token) {
+  const frame = readFrameSession();
+  if (frame) return writeFrameSession({ ...frame, token });
+  try {
+    if (token) localStorage.setItem(TOKEN_KEY, token);
+    else localStorage.removeItem(TOKEN_KEY);
+  } catch {
+    // приватный режим — сессия проживёт до перезагрузки
   }
-  if (id) localStorage.setItem('migom:user', id);
-  else localStorage.removeItem('migom:user');
 }
 
 export async function api(path, { method = 'GET', body } = {}) {
+  const token = getToken();
   const res = await fetch(`/api${path}`, {
     method,
-    headers: { 'content-type': 'application/json', 'x-user-id': getUserId() ?? '' },
+    headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}) },
     body: body ? JSON.stringify(body) : undefined,
   });
   const data = await res.json().catch(() => ({}));

@@ -6,27 +6,35 @@ import { useUser } from '../UserContext.jsx';
 export default function Landing() {
   const { me, login } = useUser();
   const navigate = useNavigate();
+  const [mode, setMode] = useState('login');
   const [role, setRole] = useState('customer');
   const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
 
   if (me) return <Navigate to="/app" replace />;
 
   async function submit(e) {
     e.preventDefault();
     setError('');
+    setBusy(true);
     try {
-      login(await api('/auth/login', { method: 'POST', body: { name, role } }));
+      const body = mode === 'login' ? { email, password } : { email, password, name, role };
+      login(await api(`/auth/${mode}`, { method: 'POST', body }));
       navigate('/app');
     } catch (err) {
       setError(err.message);
+    } finally {
+      setBusy(false);
     }
   }
 
   async function enterAs(userId) {
     await api('/demo/reset', { method: 'POST' }).catch(() => {});
-    login({ id: userId });
-    window.location.href = '/app';
+    login(await api('/demo/login', { method: 'POST', body: { userId } }));
+    navigate('/app');
   }
 
   return (
@@ -76,26 +84,62 @@ export default function Landing() {
       </section>
 
       <form className="login card" onSubmit={submit}>
-        <h2>Вход</h2>
-        <div className="role-switch">
-          <button type="button" className={role === 'customer' ? 'active' : ''} onClick={() => setRole('customer')}>
-            <span>🛍️</span>
-            <b>Я клиент</b>
-            <small>Заказываю доставку</small>
+        <div className="seg">
+          <button type="button" className={mode === 'login' ? 'active' : ''} onClick={() => setMode('login')}>
+            Вход
           </button>
-          <button type="button" className={role === 'courier' ? 'active' : ''} onClick={() => setRole('courier')}>
-            <span>🛵</span>
-            <b>Я курьер</b>
-            <small>Доставляю заказы</small>
+          <button type="button" className={mode === 'register' ? 'active' : ''} onClick={() => setMode('register')}>
+            Регистрация
           </button>
         </div>
+
+        {mode === 'register' && (
+          <>
+            <div className="role-switch">
+              <button type="button" className={role === 'customer' ? 'active' : ''} onClick={() => setRole('customer')}>
+                <span>🛍️</span>
+                <b>Я клиент</b>
+                <small>Заказываю доставку</small>
+              </button>
+              <button type="button" className={role === 'courier' ? 'active' : ''} onClick={() => setRole('courier')}>
+                <span>🛵</span>
+                <b>Я курьер</b>
+                <small>Доставляю заказы</small>
+              </button>
+            </div>
+            <label>
+              Имя
+              <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Например, Максим" maxLength={40} autoComplete="name" />
+            </label>
+          </>
+        )}
         <label>
-          Как вас зовут?
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Например, Максим" maxLength={40} />
+          Email
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" autoComplete="email" required />
+        </label>
+        <label>
+          Пароль
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder={mode === 'register' ? 'Минимум 6 символов' : ''}
+            autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
+            minLength={mode === 'register' ? 6 : undefined}
+            required
+          />
         </label>
         {error && <div className="error">{error}</div>}
-        <button className="btn btn-primary btn-lg">Продолжить</button>
-        <p className="muted small">Новые клиенты получают 100 приветственных баллов, курьеры — 50.</p>
+        <button className="btn btn-primary btn-lg" disabled={busy}>
+          {mode === 'login' ? 'Войти' : 'Создать аккаунт'}
+        </button>
+        <p className="muted small">
+          {mode === 'login' ? 'Нет аккаунта? ' : 'Уже есть аккаунт? '}
+          <button type="button" className="link-btn link-accent" onClick={() => setMode(mode === 'login' ? 'register' : 'login')}>
+            {mode === 'login' ? 'Зарегистрироваться' : 'Войти'}
+          </button>
+          {mode === 'register' && ' · новым клиентам 100 баллов, курьерам — 50'}
+        </p>
       </form>
     </div>
   );

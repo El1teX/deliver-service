@@ -9,7 +9,7 @@ export default function Profile() {
   const [profile, setProfile] = useState(null);
   useEffect(() => {
     api(`/users/${me.id}`).then(setProfile);
-  }, [me.id, me.ratings.length, me.achievements.length]);
+  }, [me.id, me.rating.count, me.achievements.length]);
 
   const isCourier = me.role === 'courier';
   const stats = isCourier
